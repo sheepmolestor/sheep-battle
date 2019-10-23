@@ -35,7 +35,6 @@ var player2;
 var projectiles;
 var projectiles2;
 var keys;
-var g;
 
 function create ()
 {
@@ -114,17 +113,21 @@ function update() {
     if (player.getData('dodge')) {
         var t = player.getData('timer');
         player.setData('timer', t+1);
+		player.alpha = 0.5;
         if (t>=player.getData('dodgeTime')) {
             player.setData('dodge',false);
             player.setData('timer',0);
+			player.alpha = 1;
         }
     }
     if (player2.getData('dodge')) {
         var t = player2.getData('timer')
         player2.setData('timer', t+1);
+		player2.alpha = 0.5;
         if (t>=player2.getData('dodgeTime')) {
             player2.setData('dodge',false);
             player2.setData('timer',0);
+			player2.alpha = 1;
         }
     }
 
@@ -151,20 +154,6 @@ function update() {
 		player2.setVelocityY(0);
 		player2.anims.play('left');
 	}
-
-    render();
-}
-
-function render() {
-    g.clear();
-    if (player.getData('dodge')) {
-        var rect = new Phaser.Geom.Rectangle(100,200,100,200);
-        g.fillRectShape(rect);
-    }
-    if (player2.getData('dodge')) {
-        var rect = new Phaser.Geom.Rectangle(600,200,100,200);
-        g.fillRectShape(rect);
-    }
 }
 
 function shoot(physics, x, y, speed, p,pgroup) {
