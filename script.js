@@ -27,6 +27,11 @@ function preload ()
         'assets/bunny2.png',
         { frameWidth: 35, frameHeight: 40, frameEnd: 18 }
     );
+	
+	this.load.spritesheet('sparkle', 
+        'assets/sparkle.png',
+        { frameWidth: 32, frameHeight: 32}
+    );
 }
 
 var physics;
@@ -35,6 +40,7 @@ var player2;
 var projectiles;
 var projectiles2;
 var keys;
+var explosions;
 
 function create ()
 {
@@ -70,6 +76,12 @@ function create ()
 		repeat: -1
 	});
 	
+	this.anims.create({
+		key: 'hurt',
+		frames: this.anims.generateFrameNumbers('sparkle', { start: 0, end: 15 }),
+		frameRate: 50,
+	});
+	
 	var physics = this.physics;
 	
     //player = this.physics.add.staticSprite(150,300,'sky').setSize(100,200).setVisible(false).setData({dodge:false,dodgeTime:40,timer:0});
@@ -77,17 +89,18 @@ function create ()
 
 	keys = this.input.keyboard.addKeys('W,S,UP,DOWN');
 	
-	player = this.physics.add.sprite(100, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0});
-    player.setCollideWorldBounds(true).setData({dodge:false,dodgeTime:40,timer:0});
+	player = this.physics.add.sprite(100, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0});
+    player.setCollideWorldBounds(true);
 	
-	player2 = this.physics.add.sprite(650, 300, 'bunny');
-    player2.setCollideWorldBounds(true).setData({dodge:false,dodgeTime:40,timer:0});
+	player2 = this.physics.add.sprite(650, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0});
+    player2.setCollideWorldBounds(true);
 
     this.input.keyboard.on('keyup-D', function (event) {
         var p=shoot(physics, player.x, player.y, 1000, player2, projectiles);
         //projectiles.add(p);
         Phaser.Actions.Call(projectiles2.getChildren(), function (sprite) {
-            physics.add.overlap(p,sprite,hitProjectile,null,game);
+            //physics.add.collider(p, sprite, hitPlayer);
+			physics.add.overlap(p,sprite,hitProjectile,null,game);
         },game);
     });
 
@@ -103,9 +116,15 @@ function create ()
         var p=shoot(physics,player2.x, player2.y, -1000, player,projectiles2);
         //projectiles2.add(p);
         Phaser.Actions.Call(projectiles.getChildren(), function (sprite) {
+			//physics.add.collider(p, sprite, hitPlayer);
             physics.add.overlap(p,sprite,hitProjectile,null,game);
         },game);
     });
+	
+	explosions = this.physics.add.group({
+		defaultKey: 'sparkle',
+		maxSize: 30
+	});
 }
 
 
@@ -172,17 +191,39 @@ function shoot(physics, x, y, speed, p,pgroup) {
     }, projectile);
 
     physics.add.overlap(projectile, p, hitPlayer, null, game);
+	//physics.add.collider(p, projectile, hitPlayer);
 
     return projectile;
 }
 
 function hitProjectile(p1,p2) {
-    p1.destroy();
+	var explosion = explosions.get().setActive(true);
+	explosion.setOrigin( 0.5, 0.5 );
+	explosion.x = p1.x;
+	explosion.y = p1.y;
+	explosion.play( 'hurt' );
+	explosion.on('animationcomplete', function() {
+		explosion.destroy();
+		explosion.setActive(false);
+	}, this);
+	p1.destroy();
     p2.destroy();
 }
 
 function hitPlayer(projectile, p) {
     if (!p.getData('dodge')) {
         projectile.destroy();
+		p.setData('damage', p.getData('damage')+1);
+		p.setTint(0xff0000);
+		var explosion = explosions.get().setActive(true);
+		explosion.setOrigin( 0.5, 0.5 );
+		explosion.x = p.x;
+		explosion.y = p.y;
+		explosion.play( 'hurt' );
+		explosion.on('animationcomplete', function() {
+			explosion.destroy();
+			explosion.setActive(false);
+			p.clearTint();
+		}, this);
     }
 }
