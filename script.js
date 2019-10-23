@@ -12,7 +12,8 @@ var config = {
     scene: {
         preload: preload,
         create: create,
-        update: update
+        update: update,
+        render: render
     }
 };
 
@@ -25,8 +26,6 @@ function preload ()
     this.load.image('sky', 'assets/skies/space3.png');
 }
 
-var keyA;
-var keyL;
 var physics;
 var player;
 var player2;
@@ -39,22 +38,48 @@ function create ()
     g = this.add.graphics({fillStyle:{color:0x0000ff}});
 
     var physics = this.physics;
-    keyA=this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-    keyA.on('up', function (key, event) {
+
+    player = physics.add.staticSprite(150,300,'sky').setSize(100,200).setVisible(false).setData({dodge:false,dodgeTime:40,timer:0});
+    player2 = physics.add.staticSprite(650,300,'sky').setSize(100,200).setVisible(false).setData({dodge:false,dodgeTime:40,timer:0});
+
+    this.input.keyboard.on('keyup-A', function (event) {
             shoot(physics, 250, 300, 1000, player2);
     });
 
-    keyL=this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.L);
-
-    keyL.on('up', function (key, event) {
-            shoot(physics,550, 300, -1000, player);
+    this.input.keyboard.on('keydown-S', function (event) {
+        player.setData('dodge',true);
     });
 
-    player = physics.add.staticSprite(150,300,'sky').setSize(100,200).setVisible(false);
-    player2 = physics.add.staticSprite(650,300,'sky').setSize(100,200).setVisible(false);
+    this.input.keyboard.on('keydown-K', function (event) {
+        player2.setData('dodge',true);
+    });
+
+    this.input.keyboard.on('keyup-L', function (event) {
+            shoot(physics,550, 300, -1000, player);
+    });
 }
 
+
 function update() {
+    if (player.getData('dodge')) {
+        var t = player.getData('timer');
+        player.setData('timer', t+1);
+        if (t>=player.getData('dodgeTime')) {
+            player.setData('dodge',false);
+            player.setData('timer',0);
+        }
+    }
+    if (player2.getData('dodge')) {
+        var t = player2.getData('timer')
+        player2.setData('timer', t+1);
+        if (t>=player2.getData('dodgeTime')) {
+            player2.setData('dodge',false);
+            player2.setData('timer',0);
+        }
+    }
+}
+
+function render() {
 
 }
 
@@ -77,6 +102,8 @@ function shoot(physics, x, y, speed, p) {
     physics.add.overlap(projectile, p, hitPlayer, null, game);
 }
 
-function hitPlayer(projectile, p2) {
-    projectile.destroy();
+function hitPlayer(projectile, p) {
+    if (!p.getData('dodge')) {
+        projectile.destroy();
+    }
 }
