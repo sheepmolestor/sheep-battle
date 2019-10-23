@@ -26,8 +26,10 @@ function preload ()
 }
 
 var keyA;
+var keyL;
 var physics;
 var player;
+var player2;
 var g;
 
 function create ()
@@ -39,18 +41,25 @@ function create ()
     var physics = this.physics;
     keyA=this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
     keyA.on('up', function (key, event) {
-        shoot(physics);
+            shoot(physics, 250, 300, 1000, player2);
+    });
+
+    keyL=this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.L);
+
+    keyL.on('up', function (key, event) {
+            shoot(physics,550, 300, -1000, player);
     });
 
     player = physics.add.staticSprite(150,300,'sky').setSize(100,200).setVisible(false);
+    player2 = physics.add.staticSprite(650,300,'sky').setSize(100,200).setVisible(false);
 }
 
 function update() {
-    
+
 }
 
-function shoot(physics) {
-    var projectile = physics.add.sprite(250,300,'sky').setSize(100,100).setVisible(false).setVelocityX(1000);
+function shoot(physics, x, y, speed, p) {
+    var projectile = physics.add.sprite(x,y,'sky').setSize(100,100).setVisible(false).setVelocityX(speed);
     projectile.body.setAllowGravity(false);
 
     // Turn on wall collision checking for your sprite
@@ -64,4 +73,10 @@ function shoot(physics) {
         // Check if the body's game object is the sprite you are listening for
         if (body.gameObject === this) {this.destroy();}
     }, projectile);
+
+    physics.add.overlap(projectile, p, hitPlayer, null, game);
+}
+
+function hitPlayer(projectile, p2) {
+    projectile.destroy();
 }
