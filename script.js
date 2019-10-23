@@ -82,10 +82,14 @@ function create ()
     player.setCollideWorldBounds(true).setData({dodge:false,dodgeTime:40,timer:0});
 	
 	player2 = this.physics.add.sprite(650, 300, 'bunny');
-    player2.setCollideWorldBounds(true);
+    player2.setCollideWorldBounds(true).setData({dodge:false,dodgeTime:40,timer:0});
 
     this.input.keyboard.on('keyup-D', function (event) {
-        shoot(physics, player.x, player.y, 1000, player2, projectiles2);
+        var p=shoot(physics, 250, 300, 1000, player2);
+        projectiles2.add(p);
+        Phaser.Actions.Call(projectiles.getChildren(), function (sprite) {
+            physics.add.overlap(p,sprite,hitProjectile,null,game);
+        },game);
     });
 
     this.input.keyboard.on('keydown-A', function (event) {
@@ -97,7 +101,11 @@ function create ()
     });
 
     this.input.keyboard.on('keyup-LEFT', function (event) {
-        shoot(physics, player2.x, player2.y, -1000, player, projectiles);
+        var p=shoot(physics,550, 300, -1000, player,projectiles);
+        projectiles.add(p);
+        Phaser.Actions.Call(projectiles2.getChildren(), function (sprite) {
+            physics.add.overlap(p,sprite,hitProjectile,null,game);
+        },game);
     });
 }
 
@@ -159,7 +167,7 @@ function render() {
     }
 }
 
-function shoot(physics, x, y, speed, p, pgroup) {
+function shoot(physics, x, y, speed, p) {
     var projectile = physics.add.sprite(x,y,'bomb').setSize(14,14).setVelocityX(speed);
 
     // Turn on wall collision checking for your sprite
@@ -175,6 +183,13 @@ function shoot(physics, x, y, speed, p, pgroup) {
     }, projectile);
 
     physics.add.overlap(projectile, p, hitPlayer, null, game);
+
+    return projectile;
+}
+
+function hitProjectile(p1,p2) {
+    p1.destroy();
+    p2.destroy();
 }
 
 function hitPlayer(projectile, p) {
