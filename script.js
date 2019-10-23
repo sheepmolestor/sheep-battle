@@ -5,15 +5,14 @@ var config = {
     physics: {
         default: 'arcade',
         arcade: {
-            gravity: { y: 200 },
-            debug:true
+            gravity: { y: 0 },
+            debug:false
         }
     },
     scene: {
         preload: preload,
         create: create,
         update: update,
-        render: render
     }
 };
 
@@ -21,9 +20,13 @@ var game = new Phaser.Game(config);
 
 function preload ()
 {
-    this.load.setBaseURL('http://labs.phaser.io');
-
-    this.load.image('sky', 'assets/skies/space3.png');
+    this.load.image('background', 'assets/starfield.png');
+	this.load.image('bomb', 'assets/bomb.png');
+	
+	this.load.spritesheet('bunny', 
+        'assets/bunny2.png',
+        { frameWidth: 35, frameHeight: 40, frameEnd: 18 }
+    );
 }
 
 var physics;
@@ -31,36 +34,70 @@ var player;
 var player2;
 var projectiles;
 var projectiles2;
+var keys;
 var g;
 
 function create ()
 {
-    this.add.image(400, 300, 'sky');
+    this.add.image(400, 300, 'background');
 
-    g = this.add.graphics({fillStyle:{color:0x0000ff}});
+	g = this.add.graphics({fillStyle:{color:0x0000ff}});
 
-    var physics = this.physics;
+    projectiles = this.physics.add.group();
+    projectiles2 = this.physics.add.group();
+	
+	this.anims.create({
+		key: 'up',
+		frames: this.anims.generateFrameNumbers('bunny', { start: 8, end: 15 }),
+		frameRate: 10,
+		repeat: -1
+	});
 
-    player = physics.add.staticSprite(150,300,'sky').setSize(100,200).setVisible(false).setData({dodge:false,dodgeTime:40,timer:0});
-    player2 = physics.add.staticSprite(650,300,'sky').setSize(100,200).setVisible(false).setData({dodge:false,dodgeTime:40,timer:0});
+	this.anims.create({
+		key: 'left',
+		frames: [ { key: 'bunny', frame: 17 } ],
+		frameRate: 20
+	});
 
-    projectiles = physics.add.group();
-    projectiles2 = physics.add.group();
+	this.anims.create({
+		key: 'right',
+		frames: [ { key: 'bunny', frame: 16 } ],
+		frameRate: 20
+	});
+	this.anims.create({
+		key: 'down',
+		frames: this.anims.generateFrameNumbers('bunny', { start: 0, end: 7 }),
+		frameRate: 10,
+		repeat: -1
+	});
+	
+	var physics = this.physics;
+	
+    //player = this.physics.add.staticSprite(150,300,'sky').setSize(100,200).setVisible(false).setData({dodge:false,dodgeTime:40,timer:0});
+    //player2 = this.physics.add.staticSprite(650,300,'sky').setSize(100,200).setVisible(false).setData({dodge:false,dodgeTime:40,timer:0});
 
-    this.input.keyboard.on('keyup-A', function (event) {
-        shoot(physics, 250, 300, 1000, player2,projectiles2);
+	keys = this.input.keyboard.addKeys('W,S,UP,DOWN');
+	
+	player = this.physics.add.sprite(100, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0});
+    player.setCollideWorldBounds(true).setData({dodge:false,dodgeTime:40,timer:0});
+	
+	player2 = this.physics.add.sprite(650, 300, 'bunny');
+    player2.setCollideWorldBounds(true);
+
+    this.input.keyboard.on('keyup-D', function (event) {
+        shoot(physics, player.x, player.y, 1000, player2, projectiles2);
     });
 
-    this.input.keyboard.on('keydown-S', function (event) {
+    this.input.keyboard.on('keydown-A', function (event) {
         player.setData('dodge',true);
     });
 
-    this.input.keyboard.on('keydown-K', function (event) {
+    this.input.keyboard.on('keydown-RIGHT', function (event) {
         player2.setData('dodge',true);
     });
 
-    this.input.keyboard.on('keyup-L', function (event) {
-            shoot(physics,550, 300, -1000, player,projectiles);
+    this.input.keyboard.on('keyup-LEFT', function (event) {
+        shoot(physics, player2.x, player2.y, -1000, player, projectiles);
     });
 }
 
@@ -83,6 +120,30 @@ function update() {
         }
     }
 
+	// Player 1 movement
+	if (keys.W.isDown) {
+		player.setVelocityY(-160);
+		player.anims.play('up', true);
+	} else if (keys.S.isDown) {
+		player.setVelocityY(160);
+		player.anims.play('down', true);
+	} else {
+		player.setVelocityY(0);
+		player.anims.play('right');
+	}
+
+	// Player 2 movement
+	if (keys.UP.isDown) {
+		player2.setVelocityY(-160);
+		player2.anims.play('up', true);
+	} else if (keys.DOWN.isDown) {
+		player2.setVelocityY(160);
+		player2.anims.play('down', true);
+	} else {
+		player2.setVelocityY(0);
+		player2.anims.play('left');
+	}
+
     render();
 }
 
@@ -99,8 +160,7 @@ function render() {
 }
 
 function shoot(physics, x, y, speed, p, pgroup) {
-    var projectile = physics.add.sprite(x,y,'sky').setSize(100,100).setVisible(false).setVelocityX(speed);
-    projectile.body.setAllowGravity(false);
+    var projectile = physics.add.sprite(x,y,'bomb').setSize(14,14).setVelocityX(speed);
 
     // Turn on wall collision checking for your sprite
     projectile.setCollideWorldBounds(true);
