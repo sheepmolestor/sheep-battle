@@ -20,7 +20,7 @@ var game = new Phaser.Game(config);
 
 function preload ()
 {
-    this.load.image('background', 'assets/starfield.png');
+	this.load.image('grass', 'assets/grass.png');
 	this.load.image('bomb', 'assets/bomb.png');
 	
 	this.load.spritesheet('bunny', 
@@ -39,7 +39,7 @@ var g;
 
 function create ()
 {
-    this.add.image(400, 300, 'background');
+	this.add.tileSprite(400, 300, 800, 600, 'grass');
 
 	g = this.add.graphics({fillStyle:{color:0x0000ff}});
 
