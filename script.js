@@ -29,6 +29,8 @@ function preload ()
 var physics;
 var player;
 var player2;
+var projectiles;
+var projectiles2;
 var g;
 
 function create ()
@@ -42,8 +44,11 @@ function create ()
     player = physics.add.staticSprite(150,300,'sky').setSize(100,200).setVisible(false).setData({dodge:false,dodgeTime:40,timer:0});
     player2 = physics.add.staticSprite(650,300,'sky').setSize(100,200).setVisible(false).setData({dodge:false,dodgeTime:40,timer:0});
 
+    projectiles = physics.add.group();
+    projectiles2 = physics.add.group();
+
     this.input.keyboard.on('keyup-A', function (event) {
-            shoot(physics, 250, 300, 1000, player2);
+        shoot(physics, 250, 300, 1000, player2,projectiles2);
     });
 
     this.input.keyboard.on('keydown-S', function (event) {
@@ -55,7 +60,7 @@ function create ()
     });
 
     this.input.keyboard.on('keyup-L', function (event) {
-            shoot(physics,550, 300, -1000, player);
+            shoot(physics,550, 300, -1000, player,projectiles);
     });
 }
 
@@ -77,13 +82,23 @@ function update() {
             player2.setData('timer',0);
         }
     }
+
+    render();
 }
 
 function render() {
-
+    g.clear();
+    if (player.getData('dodge')) {
+        var rect = new Phaser.Geom.Rectangle(100,200,100,200);
+        g.fillRectShape(rect);
+    }
+    if (player2.getData('dodge')) {
+        var rect = new Phaser.Geom.Rectangle(600,200,100,200);
+        g.fillRectShape(rect);
+    }
 }
 
-function shoot(physics, x, y, speed, p) {
+function shoot(physics, x, y, speed, p, pgroup) {
     var projectile = physics.add.sprite(x,y,'sky').setSize(100,100).setVisible(false).setVelocityX(speed);
     projectile.body.setAllowGravity(false);
 
