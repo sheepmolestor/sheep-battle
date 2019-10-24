@@ -43,7 +43,7 @@ var keys;
 var explosions;
 
 var Cooldown = new Phaser.Class({
-    initialize: function Cooldown(t) {
+    initialize: function Cooldown(t=100) {
         this.active=false;
         this.duration=t;
         this.timer=0;
@@ -67,11 +67,11 @@ var Player = new Phaser.Class({
     Extends: Phaser.Physics.Arcade.Sprite,
 
     initialize: function Player(scene) {
-        Phaser.Physics.Arcade.Sprite.call(this, scene, 150, 300, 'bunny');
+        Phaser.Physics.Arcade.Sprite.call(this, scene, 0, 0, 'bunny');
         this.dodge = new Cooldown(40);
         this.damage=0;
-        this.dodgeCooldown = new Cooldown(100);
-        this.attack = new Cooldown(100);
+        this.dodgeCooldown = new Cooldown();
+        this.attack = new Cooldown();
         //this.dodgeCooldown=false;
         //this.dodgeCooldownTime=100;
         //this.dodgeCooldownTimer=0;
@@ -96,10 +96,6 @@ var Player = new Phaser.Class({
         this.tint=0xffffff;
     }
 });
-
-function k() {player.tint=0xffffff;}
-
-function dodged(){player.dodgeCooldown.active=true;player.alpha=1;player.tint=0x0000ff;}
 
 function create ()
 {
