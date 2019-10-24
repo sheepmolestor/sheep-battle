@@ -103,8 +103,8 @@ function create ()
 
 	g = this.add.graphics({fillStyle:{color:0x0000ff}});
 
-    projectiles = this.physics.add.group();
-    projectiles2 = this.physics.add.group();
+	projectiles = this.physics.add.group({ classType: Bomb, runChildUpdate: true });
+    projectiles2 = this.physics.add.group({ classType: Bomb, runChildUpdate: true });
 	
 	this.anims.create({
 		key: 'up',
@@ -156,12 +156,14 @@ function create ()
 
     this.input.keyboard.on('keyup-D', function (event) {
         if (!player.getData('attack')) {
-            var p=shoot(physics, player.x, player.y, 1000, player2, projectiles);
-            //projectiles.add(p);
-            Phaser.Actions.Call(projectiles2.getChildren(), function (sprite) {
-                //physics.add.collider(p, sprite, hitPlayer);
-    			physics.add.overlap(p,sprite,hitProjectile,null,game);
-            },game);
+			var bomb = projectiles.get().setActive(true).setVisible(true);
+			if (bomb) {
+				bomb.fire(player, player2);
+				physics.add.collider(bomb, player2, hitPlayer);
+				//Phaser.Actions.Call(projectiles2.getChildren(), function (sprite) {
+				//	physics.add.collider(bomb, sprite, hitProjectile);
+				//}, game);
+			}
             player.setData('attack',true);
         }
     });
@@ -180,12 +182,14 @@ function create ()
 
     this.input.keyboard.on('keyup-LEFT', function (event) {
         if (!player2.getData('attack')) {
-            var p=shoot(physics,player2.x, player2.y, -1000, player,projectiles2);
-            //projectiles2.add(p);
-            Phaser.Actions.Call(projectiles.getChildren(), function (sprite) {
-    			//physics.add.collider(p, sprite, hitPlayer);
-                physics.add.overlap(p,sprite,hitProjectile,null,game);
-            },game);
+			var bomb = projectiles2.get().setActive(true).setVisible(true);
+			if (bomb) {
+				bomb.fire(player2, player);
+				physics.add.collider(bomb, player, hitPlayer);
+				//Phaser.Actions.Call(projectiles.getChildren(), function (sprite) {
+				//	physics.add.collider(bomb, sprite, hitProjectile);
+				//}, game);
+			}
             player2.setData('attack',true);
         }
     });
@@ -237,7 +241,7 @@ function update() {
     updateCooldown(player,'dodgeCooldown','dodgeCooldownTime','dodgeCooldownTimer');
     updateCooldown(player2,'dodgeCooldown','dodgeCooldownTime','dodgeCooldownTimer');
     updateCooldown(player,'attack','attackTime','attackTimer')
-    updateCooldown(player,'attack','attackTimer','attackTimer')
+    updateCooldown(player2,'attack','attackTime','attackTimer')
 
 	// Player 1 movement
 	if (keys.W.isDown) {
@@ -264,6 +268,7 @@ function update() {
 	}
 }
 
+/*
 function shoot(physics, x, y, speed, p,pgroup) {
     var projectile = pgroup.create(x,y,'bomb').setSize(14,14).setVelocityX(speed);
 
@@ -284,6 +289,7 @@ function shoot(physics, x, y, speed, p,pgroup) {
 
     return projectile;
 }
+*/
 
 function hitProjectile(p1,p2) {
 	var explosion = explosions.get().setActive(true);
@@ -295,14 +301,13 @@ function hitProjectile(p1,p2) {
 		explosion.destroy();
 		explosion.setActive(false);
 	}, this);
-	p1.destroy();
-    p2.destroy();
+	p1.setActive(false).setVisible(false);
+    p2.setActive(false).setVisible(false);
 }
 
 function hitPlayer(projectile, p) {
-    if (!p.getData('dodge')) {
-        projectile.destroy();
-		p.setData('damage', p.getData('damage')+1);
+    if (projectile.active === true && !p.getData('dodge')) {
+        p.setData('damage', p.getData('damage')+1);
 		p.setTint(0xff0000);
 		var explosion = explosions.get().setActive(true);
 		explosion.setOrigin( 0.5, 0.5 );
@@ -314,5 +319,6 @@ function hitPlayer(projectile, p) {
 			explosion.setActive(false);
 			p.clearTint();
 		}, this);
+        projectile.setActive(false).setVisible(false);
     }
 }
