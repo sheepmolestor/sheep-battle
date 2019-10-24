@@ -89,40 +89,50 @@ function create ()
 
 	keys = this.input.keyboard.addKeys('W,S,UP,DOWN');
 	
-	player = this.physics.add.sprite(100, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0,cooldown:false,cooldownTime:100,cooldownTimer:0});
+	player = this.physics.add.sprite(100, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0,dodgeCooldown:false,
+        dodgeCooldownTime:100,dodgeCooldownTimer:0,
+        attack:false,attackTime:100,attackTimer:0});
     player.setCollideWorldBounds(true);
 	
-	player2 = this.physics.add.sprite(650, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0,cooldown:false,cooldownTime:100,cooldownTimer:0});
+	player2 = this.physics.add.sprite(650, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0,dodgeCooldown:false,
+        dodgeCooldownTime:100,dodgeCooldownTimer:0,
+        attack:false,attackTime:100,attackTimer:0});
     player2.setCollideWorldBounds(true);
 
     this.input.keyboard.on('keyup-D', function (event) {
-        var p=shoot(physics, player.x, player.y, 1000, player2, projectiles);
-        //projectiles.add(p);
-        Phaser.Actions.Call(projectiles2.getChildren(), function (sprite) {
-            //physics.add.collider(p, sprite, hitPlayer);
-			physics.add.overlap(p,sprite,hitProjectile,null,game);
-        },game);
+        if (!player.getData('attack')) {
+            var p=shoot(physics, player.x, player.y, 1000, player2, projectiles);
+            //projectiles.add(p);
+            Phaser.Actions.Call(projectiles2.getChildren(), function (sprite) {
+                //physics.add.collider(p, sprite, hitPlayer);
+    			physics.add.overlap(p,sprite,hitProjectile,null,game);
+            },game);
+            player.setData('attack',true);
+        }
     });
 
     this.input.keyboard.on('keydown-A', function (event) {
-        if (!player.getData('cooldown')) {
+        if (!player.getData('dodgeCooldown')) {
             player.setData('dodge',true);
         }
     });
 
     this.input.keyboard.on('keydown-RIGHT', function (event) {
-        if (!player2.getData('cooldown')) {
+        if (!player2.getData('dodgeCooldown')) {
             player2.setData('dodge',true);
         }
     });
 
     this.input.keyboard.on('keyup-LEFT', function (event) {
-        var p=shoot(physics,player2.x, player2.y, -1000, player,projectiles2);
-        //projectiles2.add(p);
-        Phaser.Actions.Call(projectiles.getChildren(), function (sprite) {
-			//physics.add.collider(p, sprite, hitPlayer);
-            physics.add.overlap(p,sprite,hitProjectile,null,game);
-        },game);
+        if (!player2.getData('attack')) {
+            var p=shoot(physics,player2.x, player2.y, -1000, player,projectiles2);
+            //projectiles2.add(p);
+            Phaser.Actions.Call(projectiles.getChildren(), function (sprite) {
+    			//physics.add.collider(p, sprite, hitPlayer);
+                physics.add.overlap(p,sprite,hitProjectile,null,game);
+            },game);
+            player2.setData('attack',true);
+        }
     });
 	
 	explosions = this.physics.add.group({
@@ -131,6 +141,18 @@ function create ()
 	});
 }
 
+function updateCooldown(p,active,time,timer) {
+    if (p.getData(active)) {
+        var t = p.getData(timer);
+        p.setData(timer, t+1);
+        p.tint=0x0000ff;
+        if (t>=p.getData(time)) {
+            p.setData(active,false);
+            p.setData(timer,0);
+            p.tint=0xffffff;
+        }
+    }
+}
 
 function update() {
     if (player.getData('dodge')) {
@@ -139,7 +161,7 @@ function update() {
 		player.alpha = 0.5;
         if (t>=player.getData('dodgeTime')) {
             player.setData('dodge',false);
-            player.setData('cooldown',true);
+            player.setData('dodgeCooldown',true);
             player.setData('timer',0);
 			player.alpha = 1;
         }
@@ -150,33 +172,17 @@ function update() {
 		player2.alpha = 0.5;
         if (t>=player2.getData('dodgeTime')) {
             player2.setData('dodge',false);
-            player2.setData('cooldown',true);
+            player2.setData('dodgeCooldown',true);
             player2.setData('timer',0);
 			player2.alpha = 1;
         }
     }
 
     // Cooldowns
-    if (player.getData('cooldown')) {
-        var t = player.getData('cooldownTimer');
-        player.setData('cooldownTimer', t+1);
-        player.tint=0x0000ff;
-        if (t>=player.getData('cooldownTime')) {
-            player.setData('cooldown',false);
-            player.setData('cooldownTimer',0);
-            player.tint=0xffffff;
-        } 
-    }
-    if (player2.getData('cooldown')) {
-        var t = player2.getData('cooldownTimer');
-        player2.setData('cooldownTimer', t+1);
-        player2.tint=0x0000ff;
-        if (t>=player2.getData('cooldownTime')) {
-            player2.setData('cooldown',false);
-            player2.setData('cooldownTimer',0);
-            player2.tint=0xffffff;
-        } 
-    }
+    updateCooldown(player,'dodgeCooldown','dodgeCooldownTime','dodgeCooldownTimer');
+    updateCooldown(player2,'dodgeCooldown','dodgeCooldownTime','dodgeCooldownTimer');
+    updateCooldown(player,'attack','attackTime','attackTimer')
+    updateCooldown(player,'attack','attackTimer','attackTimer')
 
 	// Player 1 movement
 	if (keys.W.isDown) {
