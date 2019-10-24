@@ -43,18 +43,19 @@ var keys;
 var explosions;
 
 var Cooldown = new Phaser.Class({
-    initialize: function Cooldown() {
+    initialize: function Cooldown(t) {
         this.active=false;
-        this.duration=100;
+        this.duration=t;
         this.timer=0;
     },
 
-    update: function () {
+    update: function(fn) {
         if (this.active) {
             this.timer++;
             if (this.timer>=this.duration) {
                 this.active=false;
                 this.timer=0;
+                fn();
             }
         }
     }
@@ -66,12 +67,10 @@ var Player = new Phaser.Class({
 
     initialize: function Player(scene) {
         Phaser.Physics.Arcade.Sprite.call(this, scene, 150, 300, 'bunny');
-        this.dodge=false;
-        this.dodgeTime=40;
-        this.timer=0;
+        this.dodge = new Cooldown(40);
         this.damage=0;
-        this.dodgeCooldown = new Cooldown();
-        this.attack = new Cooldown();
+        this.dodgeCooldown = new Cooldown(100);
+        this.attack = new Cooldown(100);
         //this.dodgeCooldown=false;
         //this.dodgeCooldownTime=100;
         //this.dodgeCooldownTimer=0;
@@ -80,23 +79,20 @@ var Player = new Phaser.Class({
         //this.attackTimer=0;
     },
 
-    updateCooldown: function (p,active,time,timer) {
-        if (p.getData(active)) {
-            var t = p.getData(timer);
-            p.setData(timer, t+1);
-            p.tint=0x0000ff;
-            if (t>=p.getData(time)) {
-                p.setData(active,false);
-                p.setData(timer,0);
-                p.tint=0xffffff;
-            }
-        }
+    update: function () {
+        var i=this.dodge.update(dodged);
+        this.dodgeCooldown.update(k);
+        this.attack.update(k);
     },
 
-    bean: function () {
-        return true;
+    blue: function () {
+        this.tint=0xffffff;
     }
 });
+
+function k() {player.tint=0xffffff;}
+
+function dodged(){player.dodgeCooldown.active=true;player.alpha=1;player.tint=0x0000ff;}
 
 function create ()
 {
@@ -155,20 +151,22 @@ function create ()
     player2.setCollideWorldBounds(true);
 
     this.input.keyboard.on('keyup-D', function (event) {
-        if (!player.getData('attack')) {
+        if (!player.attack.active) {
             var p=shoot(physics, player.x, player.y, 1000, player2, projectiles);
             //projectiles.add(p);
             Phaser.Actions.Call(projectiles2.getChildren(), function (sprite) {
                 //physics.add.collider(p, sprite, hitPlayer);
     			physics.add.overlap(p,sprite,hitProjectile,null,game);
             },game);
-            player.setData('attack',true);
+            player.attack.active=true;
+            player.tint=0x0000ff;
         }
     });
 
     this.input.keyboard.on('keydown-A', function (event) {
-        if (!player.getData('dodgeCooldown')) {
-            player.setData('dodge',true);
+        if (!player.dodgeCooldown.active) {
+            player.dodge.active=true;
+            player.alpha=0.5;
         }
     });
 
@@ -210,17 +208,6 @@ function updateCooldown(p,active,time,timer) {
 }
 
 function update() {
-    if (player.getData('dodge')) {
-        var t = player.getData('timer');
-        player.setData('timer', t+1);
-		player.alpha = 0.5;
-        if (t>=player.getData('dodgeTime')) {
-            player.setData('dodge',false);
-            player.setData('dodgeCooldown',true);
-            player.setData('timer',0);
-			player.alpha = 1;
-        }
-    }
     if (player2.getData('dodge')) {
         var t = player2.getData('timer')
         player2.setData('timer', t+1);
@@ -234,6 +221,7 @@ function update() {
     }
 
     // Cooldowns
+    player.update();
     //updateCooldown(player,'dodgeCooldown','dodgeCooldownTime','dodgeCooldownTimer');
     updateCooldown(player2,'dodgeCooldown','dodgeCooldownTime','dodgeCooldownTimer');
     //updateCooldown(player,'attack','attackTime','attackTimer');
