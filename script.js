@@ -18,6 +18,84 @@ var config = {
 
 var game = new Phaser.Game(config);
 
+var Bomb = new Phaser.Class({
+
+    Extends: Phaser.GameObjects.Image,
+
+    initialize:
+
+    // Bullet Constructor
+    function Bomb (scene)
+    {
+        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'bomb');
+        this.speed = 1;
+        this.born = 0;
+        this.direction = 0;
+        this.xSpeed = 0;
+        this.ySpeed = 0;
+        //this.setSize(12, 12, true);
+		this.setScale(2,2);
+    },
+
+    // Fires a bullet from the player to the reticle
+    fire: function (shooter, val)
+    {
+		this.direction = 0;
+		var left = (val % 2 != 0);
+		if (left) {val -= 1;}
+		switch(val) {
+			case 2: // up only
+				this.direction = Math.PI/6;
+				break;
+			case 4: // side only
+				this.direction = 0;
+				break;
+			case 6: // up and side
+				this.direction = Math.PI/12;
+				break;
+			case 8: // down only
+				this.direction = -Math.PI/6;
+				break;
+			case 12: // down and side
+				this.direction = -Math.PI/12;
+				break;
+		} 
+		this.direction -= Math.PI;
+		if (left) {this.direction *= -1;}
+		this.direction += Math.PI/2;
+        this.setPosition(shooter.x, shooter.y); // Initial position
+
+        // Calculate X and y velocity of bullet to moves it from shooter to target
+        if (left)
+        {
+            this.xSpeed = this.speed*Math.sin(this.direction);
+            this.ySpeed = this.speed*Math.cos(this.direction);
+        }
+        else
+        {
+            this.xSpeed = -this.speed*Math.sin(this.direction);
+            this.ySpeed = -this.speed*Math.cos(this.direction);
+        }
+
+        this.rotation = shooter.rotation; // angle bullet with shooters rotation
+        this.born = 0; // Time since new bullet spawned
+    },
+
+    // Updates the position of the bullet each cycle
+    update: function (time, delta)
+    {
+        this.x += this.xSpeed * delta;
+        this.y += this.ySpeed * delta;
+        this.born += delta;
+        if (this.born > 1800)
+        {
+            this.setActive(false);
+            this.setVisible(false);
+        }
+    }
+
+});
+
 function preload ()
 {
 	this.load.image('grass', 'assets/grass.png');
@@ -103,8 +181,8 @@ function create ()
 
 	g = this.add.graphics({fillStyle:{color:0x0000ff}});
 
-    projectiles = this.physics.add.group();
-    projectiles2 = this.physics.add.group();
+	projectiles = this.physics.add.group({ classType: Bomb, runChildUpdate: true });
+    projectiles2 = this.physics.add.group({ classType: Bomb, runChildUpdate: true });
 	
 	this.anims.create({
 		key: 'up',
@@ -139,29 +217,38 @@ function create ()
 	
 	var physics = this.physics;
 	
-    //player = this.physics.add.staticSprite(150,300,'sky').setSize(100,200).setVisible(false).setData({dodge:false,dodgeTime:40,timer:0});
-    //player2 = this.physics.add.staticSprite(650,300,'sky').setSize(100,200).setVisible(false).setData({dodge:false,dodgeTime:40,timer:0});
-
-	keys = this.input.keyboard.addKeys('W,S,UP,DOWN');
+	keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT');
 	
 	var players = this.physics.add.group({classType: Player});
     player=players.get();
     player.setCollideWorldBounds(true);
-	
-	player2=players.get();
+    
+    player2=players.get();
     player2.setCollideWorldBounds(true);
 
     player.initPos(150,300);
     player2.initPos(650,300);
 
-    this.input.keyboard.on('keyup-D', function (event) {
+    this.input.keyboard.on('keydown-SPACE', function (event) {
         if (!player.attack.active) {
-            var p=shoot(physics, player.x, player.y, 1000, player2, projectiles);
-            //projectiles.add(p);
-            Phaser.Actions.Call(projectiles2.getChildren(), function (sprite) {
-                //physics.add.collider(p, sprite, hitPlayer);
-    			physics.add.overlap(p,sprite,hitProjectile,null,game);
-            },game);
+			var bomb = projectiles.get().setActive(true).setVisible(true);
+			if (bomb) {
+				var val = 0;
+				if (keys.W.isDown) {
+					val += 2;
+				} 
+				if (keys.D.isDown) {
+					val += 4;
+				}
+				if (keys.S.isDown)  {
+					val += 8;
+				}
+				bomb.fire(player, val);
+				physics.add.collider(bomb, player2, hitPlayer);
+				//Phaser.Actions.Call(projectiles2.getChildren(), function (sprite) {
+				//	physics.add.collider(bomb, sprite, hitProjectile);
+				//}, game);
+			}
             player.attack.active=true;
             player.tint=0x0000ff;
         }
@@ -181,14 +268,28 @@ function create ()
         }
     });
 
-    this.input.keyboard.on('keyup-LEFT', function (event) {
+    this.input.keyboard.on('keydown-ENTER', function (event) {
         if (!player2.attack.active) {
-            var p=shoot(physics,player2.x, player2.y, -1000, player,projectiles2);
-            //projectiles2.add(p);
-            Phaser.Actions.Call(projectiles.getChildren(), function (sprite) {
-    			//physics.add.collider(p, sprite, hitPlayer);
-                physics.add.overlap(p,sprite,hitProjectile,null,game);
-            },game);
+			var bomb = projectiles2.get().setActive(true).setVisible(true);
+			if (bomb) {
+				var val = 1;
+				if (keys.UP.isDown) {
+					val += 2;
+				}
+				if (keys.LEFT.isDown) {
+					val += 4;
+				}
+				if (keys.DOWN.isDown)  {
+					val += 8;
+				}
+				bomb.fire(player2, val);
+				physics.add.collider(bomb, player, hitPlayer);
+				//Phaser.Actions.Call(projectiles.getChildren(), function (sprite) {
+				//	physics.add.collider(bomb, sprite, hitProjectile);
+				//}, game);
+				// Player 2 movement
+			}
+
             player2.attack.active=true;
             player2.tint=0x0000ff;
         }
@@ -243,27 +344,6 @@ function update() {
 	}
 }
 
-function shoot(physics, x, y, speed, p,pgroup) {
-    var projectile = pgroup.create(x,y,'bomb').setSize(14,14).setVelocityX(speed);
-
-    // Turn on wall collision checking for your sprite
-    projectile.setCollideWorldBounds(true);
-
-    // Turning this on will allow you to listen to the 'worldbounds' event
-    projectile.body.onWorldBounds = true;
-
-    // 'worldbounds' event listener
-    projectile.body.world.on('worldbounds', function(body) {
-        // Check if the body's game object is the sprite you are listening for
-        if (body.gameObject === this) {this.destroy();}
-    }, projectile);
-
-    physics.add.overlap(projectile, p, hitPlayer, null, game);
-	//physics.add.collider(p, projectile, hitPlayer);
-
-    return projectile;
-}
-
 function hitProjectile(p1,p2) {
 	var explosion = explosions.get().setActive(true);
 	explosion.setOrigin( 0.5, 0.5 );
@@ -274,13 +354,12 @@ function hitProjectile(p1,p2) {
 		explosion.destroy();
 		explosion.setActive(false);
 	}, this);
-	p1.destroy();
-    p2.destroy();
+	p1.setActive(false).setVisible(false);
+    p2.setActive(false).setVisible(false);
 }
 
 function hitPlayer(projectile, p) {
     if (!p.dodge.active) {
-        projectile.destroy();
 		p.damage++;
 		p.setTint(0xff0000);
 		var explosion = explosions.get().setActive(true);
@@ -293,5 +372,6 @@ function hitPlayer(projectile, p) {
 			explosion.setActive(false);
 			p.clearTint();
 		}, this);
+        projectile.setActive(false).setVisible(false);
     }
 }
