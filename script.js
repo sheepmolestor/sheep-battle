@@ -210,7 +210,7 @@ function create ()
         }
     });
 
-    this.input.keyboard.on('keydown-NUMPAD_ZERO', function (event) {
+    this.input.keyboard.on('keydown-ENTER', function (event) {
         if (!player2.getData('attack')) {
 			var bomb = projectiles2.get().setActive(true).setVisible(true);
 			if (bomb) {
