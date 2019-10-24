@@ -62,10 +62,10 @@ var Cooldown = new Phaser.Class({
 
 var Player = new Phaser.Class({
 
-    Extends: Phaser.GameObjects.Sprite,
+    Extends: Phaser.Physics.Arcade.Sprite,
 
     initialize: function Player(scene) {
-        Phaser.GameObjects.Sprite.call(this, scene, 0, 0, 'bunny');
+        Phaser.Physics.Arcade.Sprite.call(this, scene, 150, 300, 'bunny');
         this.dodge=false;
         this.dodgeTime=40;
         this.timer=0;
@@ -78,9 +78,9 @@ var Player = new Phaser.Class({
         //this.attack=false;
         //this.attackTime=100;
         //this.attackTimer=0;
-    }
+    },
 
-    /*updateCooldown: function (p,active,time,timer) {
+    updateCooldown: function (p,active,time,timer) {
         if (p.getData(active)) {
             var t = p.getData(timer);
             p.setData(timer, t+1);
@@ -91,7 +91,11 @@ var Player = new Phaser.Class({
                 p.tint=0xffffff;
             }
         }
-    }*/
+    },
+
+    bean: function () {
+        return true;
+    }
 });
 
 function create ()
@@ -141,9 +145,8 @@ function create ()
 
 	keys = this.input.keyboard.addKeys('W,S,UP,DOWN');
 	
-	player = new Player();/*this.physics.add.sprite(100, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0,dodgeCooldown:false,
-        dodgeCooldownTime:100,dodgeCooldownTimer:0,
-        attack:false,attackTime:100,attackTimer:0});*/
+	var players = this.physics.add.group({classType: Player});
+    player=players.get();
     player.setCollideWorldBounds(true);
 	
 	player2 = this.physics.add.sprite(650, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0,dodgeCooldown:false,
@@ -231,9 +234,9 @@ function update() {
     }
 
     // Cooldowns
-    updateCooldown(player,'dodgeCooldown','dodgeCooldownTime','dodgeCooldownTimer');
+    //updateCooldown(player,'dodgeCooldown','dodgeCooldownTime','dodgeCooldownTimer');
     updateCooldown(player2,'dodgeCooldown','dodgeCooldownTime','dodgeCooldownTimer');
-    updateCooldown(player,'attack','attackTime','attackTimer');
+    //updateCooldown(player,'attack','attackTime','attackTimer');
     updateCooldown(player2,'attack','attackTime','attackTimer');
 
 	// Player 1 movement
