@@ -49,15 +49,16 @@ var Cooldown = new Phaser.Class({
         this.timer=0;
     },
 
-    update: function(fn) {
+    update: function() {
         if (this.active) {
             this.timer++;
             if (this.timer>=this.duration) {
                 this.active=false;
                 this.timer=0;
-                fn();
+                return true;
             }
         }
+        return false;
     }
 });
 
@@ -79,10 +80,16 @@ var Player = new Phaser.Class({
         //this.attackTimer=0;
     },
 
+    initPos: function(x, y) {
+        this.setPosition(x,y);
+    },
+
     update: function () {
-        var i=this.dodge.update(dodged);
-        this.dodgeCooldown.update(k);
-        this.attack.update(k);
+        if (this.dodge.update()) {
+            this.dodgeCooldown.active=true;this.alpha=1;this.tint=0x0000ff;
+        }
+        if (this.dodgeCooldown.update()) {this.blue();}
+        if (this.attack.update()){this.blue();}
     },
 
     blue: function () {
@@ -145,10 +152,11 @@ function create ()
     player=players.get();
     player.setCollideWorldBounds(true);
 	
-	player2 = this.physics.add.sprite(650, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0,dodgeCooldown:false,
-        dodgeCooldownTime:100,dodgeCooldownTimer:0,
-        attack:false,attackTime:100,attackTimer:0});
+	player2=players.get();
     player2.setCollideWorldBounds(true);
+
+    player.initPos(150,300);
+    player2.initPos(650,300);
 
     this.input.keyboard.on('keyup-D', function (event) {
         if (!player.attack.active) {
@@ -171,20 +179,22 @@ function create ()
     });
 
     this.input.keyboard.on('keydown-RIGHT', function (event) {
-        if (!player2.getData('dodgeCooldown')) {
-            player2.setData('dodge',true);
+        if (!player2.dodgeCooldown.active) {
+            player2.dodge.active=true;
+            player2.alpha=0.5;
         }
     });
 
     this.input.keyboard.on('keyup-LEFT', function (event) {
-        if (!player2.getData('attack')) {
+        if (!player2.attack.active) {
             var p=shoot(physics,player2.x, player2.y, -1000, player,projectiles2);
             //projectiles2.add(p);
             Phaser.Actions.Call(projectiles.getChildren(), function (sprite) {
     			//physics.add.collider(p, sprite, hitPlayer);
                 physics.add.overlap(p,sprite,hitProjectile,null,game);
             },game);
-            player2.setData('attack',true);
+            player2.attack.active=true;
+            player2.tint=0x0000ff;
         }
     });
 	
@@ -194,7 +204,7 @@ function create ()
 	});
 }
 
-function updateCooldown(p,active,time,timer) {
+/*function updateCooldown(p,active,time,timer) {
     if (p.getData(active)) {
         var t = p.getData(timer);
         p.setData(timer, t+1);
@@ -205,27 +215,12 @@ function updateCooldown(p,active,time,timer) {
             p.tint=0xffffff;
         }
     }
-}
+}*/
 
 function update() {
-    if (player2.getData('dodge')) {
-        var t = player2.getData('timer')
-        player2.setData('timer', t+1);
-		player2.alpha = 0.5;
-        if (t>=player2.getData('dodgeTime')) {
-            player2.setData('dodge',false);
-            player2.setData('dodgeCooldown',true);
-            player2.setData('timer',0);
-			player2.alpha = 1;
-        }
-    }
-
     // Cooldowns
     player.update();
-    //updateCooldown(player,'dodgeCooldown','dodgeCooldownTime','dodgeCooldownTimer');
-    updateCooldown(player2,'dodgeCooldown','dodgeCooldownTime','dodgeCooldownTimer');
-    //updateCooldown(player,'attack','attackTime','attackTimer');
-    updateCooldown(player2,'attack','attackTime','attackTimer');
+    player2.update();
 
 	// Player 1 movement
 	if (keys.W.isDown) {
@@ -288,9 +283,9 @@ function hitProjectile(p1,p2) {
 }
 
 function hitPlayer(projectile, p) {
-    if (!p.getData('dodge')) {
+    if (!p.dodge.active) {
         projectile.destroy();
-		p.setData('damage', p.getData('damage')+1);
+		p.damage++;
 		p.setTint(0xff0000);
 		var explosion = explosions.get().setActive(true);
 		explosion.setOrigin( 0.5, 0.5 );
