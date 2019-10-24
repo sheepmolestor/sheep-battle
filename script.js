@@ -37,13 +37,35 @@ var Bomb = new Phaser.Class({
     },
 
     // Fires a bullet from the player to the reticle
-    fire: function (shooter, target)
+    fire: function (shooter, val)
     {
+		this.direction = 0;
+		var left = (val % 2 != 0);
+		if (left) {val -= 1;}
+		switch(val) {
+			case 2: // up only
+				this.direction = Math.PI/6;
+				break;
+			case 4: // side only
+				this.direction = 0;
+				break;
+			case 6: // up and side
+				this.direction = Math.PI/12;
+				break;
+			case 8: // down only
+				this.direction = -Math.PI/6;
+				break;
+			case 12: // down and side
+				this.direction = -Math.PI/12;
+				break;
+		} 
+		this.direction -= Math.PI;
+		if (left) {this.direction *= -1;}
+		this.direction += Math.PI/2;
         this.setPosition(shooter.x, shooter.y); // Initial position
-        this.direction = Math.atan( (target.x-this.x) / (target.y-this.y));
 
         // Calculate X and y velocity of bullet to moves it from shooter to target
-        if (target.y >= this.y)
+        if (left)
         {
             this.xSpeed = this.speed*Math.sin(this.direction);
             this.ySpeed = this.speed*Math.cos(this.direction);
@@ -139,10 +161,7 @@ function create ()
 	
 	var physics = this.physics;
 	
-    //player = this.physics.add.staticSprite(150,300,'sky').setSize(100,200).setVisible(false).setData({dodge:false,dodgeTime:40,timer:0});
-    //player2 = this.physics.add.staticSprite(650,300,'sky').setSize(100,200).setVisible(false).setData({dodge:false,dodgeTime:40,timer:0});
-
-	keys = this.input.keyboard.addKeys('W,S,UP,DOWN');
+	keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT');
 	
 	player = this.physics.add.sprite(100, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0,dodgeCooldown:false,
         dodgeCooldownTime:100,dodgeCooldownTimer:0,
@@ -154,11 +173,21 @@ function create ()
         attack:false,attackTime:100,attackTimer:0});
     player2.setCollideWorldBounds(true);
 
-    this.input.keyboard.on('keyup-D', function (event) {
+    this.input.keyboard.on('keydown-SPACE', function (event) {
         if (!player.getData('attack')) {
 			var bomb = projectiles.get().setActive(true).setVisible(true);
 			if (bomb) {
-				bomb.fire(player, player2);
+				var val = 0;
+				if (keys.W.isDown) {
+					val += 2;
+				} 
+				if (keys.D.isDown) {
+					val += 4;
+				}
+				if (keys.S.isDown)  {
+					val += 8;
+				}
+				bomb.fire(player, val);
 				physics.add.collider(bomb, player2, hitPlayer);
 				//Phaser.Actions.Call(projectiles2.getChildren(), function (sprite) {
 				//	physics.add.collider(bomb, sprite, hitProjectile);
@@ -180,15 +209,26 @@ function create ()
         }
     });
 
-    this.input.keyboard.on('keyup-LEFT', function (event) {
+    this.input.keyboard.on('keydown-NUMPAD_ZERO', function (event) {
         if (!player2.getData('attack')) {
 			var bomb = projectiles2.get().setActive(true).setVisible(true);
 			if (bomb) {
-				bomb.fire(player2, player);
+				var val = 1;
+				if (keys.UP.isDown) {
+					val += 2;
+				}
+				if (keys.LEFT.isDown) {
+					val += 4;
+				}
+				if (keys.DOWN.isDown)  {
+					val += 8;
+				}
+				bomb.fire(player2, val);
 				physics.add.collider(bomb, player, hitPlayer);
 				//Phaser.Actions.Call(projectiles.getChildren(), function (sprite) {
 				//	physics.add.collider(bomb, sprite, hitProjectile);
 				//}, game);
+				// Player 2 movement
 			}
             player2.setData('attack',true);
         }
@@ -267,29 +307,6 @@ function update() {
 		player2.anims.play('left');
 	}
 }
-
-/*
-function shoot(physics, x, y, speed, p,pgroup) {
-    var projectile = pgroup.create(x,y,'bomb').setSize(14,14).setVelocityX(speed);
-
-    // Turn on wall collision checking for your sprite
-    projectile.setCollideWorldBounds(true);
-
-    // Turning this on will allow you to listen to the 'worldbounds' event
-    projectile.body.onWorldBounds = true;
-
-    // 'worldbounds' event listener
-    projectile.body.world.on('worldbounds', function(body) {
-        // Check if the body's game object is the sprite you are listening for
-        if (body.gameObject === this) {this.destroy();}
-    }, projectile);
-
-    physics.add.overlap(projectile, p, hitPlayer, null, game);
-	//physics.add.collider(p, projectile, hitPlayer);
-
-    return projectile;
-}
-*/
 
 function hitProjectile(p1,p2) {
 	var explosion = explosions.get().setActive(true);
