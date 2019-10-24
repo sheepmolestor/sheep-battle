@@ -89,10 +89,10 @@ function create ()
 
 	keys = this.input.keyboard.addKeys('W,S,UP,DOWN');
 	
-	player = this.physics.add.sprite(100, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0});
+	player = this.physics.add.sprite(100, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0,cooldown:false,cooldownTime:100,cooldownTimer:0});
     player.setCollideWorldBounds(true);
 	
-	player2 = this.physics.add.sprite(650, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0});
+	player2 = this.physics.add.sprite(650, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0,cooldown:false,cooldownTime:100,cooldownTimer:0});
     player2.setCollideWorldBounds(true);
 
     this.input.keyboard.on('keyup-D', function (event) {
@@ -105,11 +105,15 @@ function create ()
     });
 
     this.input.keyboard.on('keydown-A', function (event) {
-        player.setData('dodge',true);
+        if (!player.getData('cooldown')) {
+            player.setData('dodge',true);
+        }
     });
 
     this.input.keyboard.on('keydown-RIGHT', function (event) {
-        player2.setData('dodge',true);
+        if (!player2.getData('cooldown')) {
+            player2.setData('dodge',true);
+        }
     });
 
     this.input.keyboard.on('keyup-LEFT', function (event) {
@@ -135,6 +139,7 @@ function update() {
 		player.alpha = 0.5;
         if (t>=player.getData('dodgeTime')) {
             player.setData('dodge',false);
+            player.setData('cooldown',true);
             player.setData('timer',0);
 			player.alpha = 1;
         }
@@ -145,9 +150,32 @@ function update() {
 		player2.alpha = 0.5;
         if (t>=player2.getData('dodgeTime')) {
             player2.setData('dodge',false);
+            player2.setData('cooldown',true);
             player2.setData('timer',0);
 			player2.alpha = 1;
         }
+    }
+
+    // Cooldowns
+    if (player.getData('cooldown')) {
+        var t = player.getData('cooldownTimer');
+        player.setData('cooldownTimer', t+1);
+        player.tint=0x0000ff;
+        if (t>=player.getData('cooldownTime')) {
+            player.setData('cooldown',false);
+            player.setData('cooldownTimer',0);
+            player.tint=0xffffff;
+        } 
+    }
+    if (player2.getData('cooldown')) {
+        var t = player2.getData('cooldownTimer');
+        player2.setData('cooldownTimer', t+1);
+        player2.tint=0x0000ff;
+        if (t>=player2.getData('cooldownTime')) {
+            player2.setData('cooldown',false);
+            player2.setData('cooldownTimer',0);
+            player2.tint=0xffffff;
+        } 
     }
 
 	// Player 1 movement
