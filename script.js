@@ -42,6 +42,58 @@ var projectiles2;
 var keys;
 var explosions;
 
+var Cooldown = new Phaser.Class({
+    initialize: function Cooldown() {
+        this.active=false;
+        this.duration=100;
+        this.timer=0;
+    },
+
+    update: function () {
+        if (this.active) {
+            this.timer++;
+            if (this.timer>=this.duration) {
+                this.active=false;
+                this.timer=0;
+            }
+        }
+    }
+});
+
+var Player = new Phaser.Class({
+
+    Extends: Phaser.GameObjects.Sprite,
+
+    initialize: function Player(scene) {
+        Phaser.GameObjects.Sprite.call(this, scene, 0, 0, 'bunny');
+        this.dodge=false;
+        this.dodgeTime=40;
+        this.timer=0;
+        this.damage=0;
+        this.dodgeCooldown = new Cooldown();
+        this.attack = new Cooldown();
+        //this.dodgeCooldown=false;
+        //this.dodgeCooldownTime=100;
+        //this.dodgeCooldownTimer=0;
+        //this.attack=false;
+        //this.attackTime=100;
+        //this.attackTimer=0;
+    }
+
+    /*updateCooldown: function (p,active,time,timer) {
+        if (p.getData(active)) {
+            var t = p.getData(timer);
+            p.setData(timer, t+1);
+            p.tint=0x0000ff;
+            if (t>=p.getData(time)) {
+                p.setData(active,false);
+                p.setData(timer,0);
+                p.tint=0xffffff;
+            }
+        }
+    }*/
+});
+
 function create ()
 {
 	this.add.tileSprite(400, 300, 800, 600, 'grass');
@@ -89,9 +141,9 @@ function create ()
 
 	keys = this.input.keyboard.addKeys('W,S,UP,DOWN');
 	
-	player = this.physics.add.sprite(100, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0,dodgeCooldown:false,
+	player = new Player();/*this.physics.add.sprite(100, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0,dodgeCooldown:false,
         dodgeCooldownTime:100,dodgeCooldownTimer:0,
-        attack:false,attackTime:100,attackTimer:0});
+        attack:false,attackTime:100,attackTimer:0});*/
     player.setCollideWorldBounds(true);
 	
 	player2 = this.physics.add.sprite(650, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0,dodgeCooldown:false,
@@ -181,8 +233,8 @@ function update() {
     // Cooldowns
     updateCooldown(player,'dodgeCooldown','dodgeCooldownTime','dodgeCooldownTimer');
     updateCooldown(player2,'dodgeCooldown','dodgeCooldownTime','dodgeCooldownTimer');
-    updateCooldown(player,'attack','attackTime','attackTimer')
-    updateCooldown(player,'attack','attackTimer','attackTimer')
+    updateCooldown(player,'attack','attackTime','attackTimer');
+    updateCooldown(player2,'attack','attackTime','attackTimer');
 
 	// Player 1 movement
 	if (keys.W.isDown) {
