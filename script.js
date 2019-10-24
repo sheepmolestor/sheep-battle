@@ -33,7 +33,8 @@ var Bomb = new Phaser.Class({
         this.direction = 0;
         this.xSpeed = 0;
         this.ySpeed = 0;
-        this.setSize(12, 12, true);
+        //this.setSize(12, 12, true);
+		this.setScale(2,2);
     },
 
     // Fires a bullet from the player to the reticle
@@ -163,12 +164,12 @@ function create ()
 	
 	keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT');
 	
-	player = this.physics.add.sprite(100, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0,dodgeCooldown:false,
+	player = this.physics.add.sprite(100, 300, 'bunny').setScale(2,2).setData({dodge:false,dodgeTime:40,timer:0,damage:0,dodgeCooldown:false,
         dodgeCooldownTime:100,dodgeCooldownTimer:0,
         attack:false,attackTime:100,attackTimer:0});
     player.setCollideWorldBounds(true);
 	
-	player2 = this.physics.add.sprite(650, 300, 'bunny').setData({dodge:false,dodgeTime:40,timer:0,damage:0,dodgeCooldown:false,
+	player2 = this.physics.add.sprite(650, 300, 'bunny').setScale(2,2).setData({dodge:false,dodgeTime:40,timer:0,damage:0,dodgeCooldown:false,
         dodgeCooldownTime:100,dodgeCooldownTimer:0,
         attack:false,attackTime:100,attackTimer:0});
     player2.setCollideWorldBounds(true);
