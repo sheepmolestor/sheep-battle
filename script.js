@@ -59,28 +59,33 @@ var Bomb = new Phaser.Class({
 			case 12: // down and side
 				this.direction = -Math.PI/12;
 				break;
-		}
+		} 
+		this.direction -= Math.PI;
+		if (left) {this.direction *= -1;}
+		this.direction += Math.PI/2;
         this.setPosition(shooter.x, shooter.y); // Initial position
 
         // Calculate X and y velocity of bullet to moves it from shooter to target
         if (left)
         {
-            this.xSpeed = -this.speed*Math.cos(this.direction);
-            this.ySpeed = -this.speed*Math.sin(this.direction);
+            this.xSpeed = this.speed*Math.sin(this.direction);
+            this.ySpeed = this.speed*Math.cos(this.direction);
         }
         else
         {
-            this.xSpeed = this.speed*Math.cos(this.direction);
-            this.ySpeed = -this.speed*Math.sin(this.direction);
+            this.xSpeed = -this.speed*Math.sin(this.direction);
+            this.ySpeed = -this.speed*Math.cos(this.direction);
         }
 
         this.rotation = shooter.rotation; // angle bullet with shooters rotation
         this.born = 0; // Time since new bullet spawned
+
     },
 
     // Updates the position of the bullet each cycle
     update: function (time, delta)
     {
+        var i = this.y;
         this.x += this.xSpeed * delta;
         this.y += this.ySpeed * delta;
         this.born += delta;
@@ -89,6 +94,7 @@ var Bomb = new Phaser.Class({
             this.setActive(false);
             this.setVisible(false);
         }
+        document.getElementById("title").innerHTML = this.y-i;
     }
 
 });
@@ -116,61 +122,6 @@ var projectiles;
 var projectiles2;
 var keys;
 var explosions;
-
-var Cooldown = new Phaser.Class({
-    initialize: function Cooldown(t=100) {
-        this.active=false;
-        this.duration=t;
-        this.timer=0;
-    },
-
-    update: function() {
-        if (this.active) {
-            this.timer++;
-            if (this.timer>=this.duration) {
-                this.active=false;
-                this.timer=0;
-                return true;
-            }
-        }
-        return false;
-    }
-});
-
-var Player = new Phaser.Class({
-
-    Extends: Phaser.Physics.Arcade.Sprite,
-
-    initialize: function Player(scene) {
-        Phaser.Physics.Arcade.Sprite.call(this, scene, 0, 0, 'bunny');
-        this.dodge = new Cooldown(40);
-        this.damage=0;
-        this.dodgeCooldown = new Cooldown();
-        this.attack = new Cooldown();
-        //this.dodgeCooldown=false;
-        //this.dodgeCooldownTime=100;
-        //this.dodgeCooldownTimer=0;
-        //this.attack=false;
-        //this.attackTime=100;
-        //this.attackTimer=0;
-    },
-
-    initPos: function(x, y) {
-        this.setPosition(x,y);
-    },
-
-    update: function () {
-        if (this.dodge.update()) {
-            this.dodgeCooldown.active=true;this.alpha=1;this.tint=0x0000ff;
-        }
-        if (this.dodgeCooldown.update()) {this.blue();}
-        if (this.attack.update()){this.blue();}
-    },
-
-    blue: function () {
-        this.tint=0xffffff;
-    }
-});
 
 function create ()
 {
@@ -216,18 +167,18 @@ function create ()
 	
 	keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT');
 	
-	var players = this.physics.add.group({classType: Player});
-    player=players.get().setScale(2,2);
+	player = this.physics.add.sprite(100, 300, 'bunny').setScale(2,2).setData({dodge:false,dodgeTime:40,timer:0,damage:0,dodgeCooldown:false,
+        dodgeCooldownTime:100,dodgeCooldownTimer:0,
+        attack:false,attackTime:100,attackTimer:0});
     player.setCollideWorldBounds(true);
-    
-    player2=players.get().setScale(2,2);
+	
+	player2 = this.physics.add.sprite(650, 300, 'bunny').setScale(2,2).setData({dodge:false,dodgeTime:40,timer:0,damage:0,dodgeCooldown:false,
+        dodgeCooldownTime:100,dodgeCooldownTimer:0,
+        attack:false,attackTime:100,attackTimer:0});
     player2.setCollideWorldBounds(true);
 
-    player.initPos(150,300);
-    player2.initPos(650,300);
-
     this.input.keyboard.on('keydown-SPACE', function (event) {
-        if (!player.attack.active) {
+        if (!player.getData('attack')) {
 			var bomb = projectiles.get().setActive(true).setVisible(true);
 			if (bomb) {
 				var val = 0;
@@ -246,27 +197,24 @@ function create ()
 				//	physics.add.collider(bomb, sprite, hitProjectile);
 				//}, game);
 			}
-            player.attack.active=true;
-            player.tint=0x0000ff;
+            player.setData('attack',true);
         }
     });
 
     this.input.keyboard.on('keydown-A', function (event) {
-        if (!player.dodgeCooldown.active) {
-            player.dodge.active=true;
-            player.alpha=0.5;
+        if (!player.getData('dodgeCooldown')) {
+            player.setData('dodge',true);
         }
     });
 
     this.input.keyboard.on('keydown-RIGHT', function (event) {
-        if (!player2.dodgeCooldown.active) {
-            player2.dodge.active=true;
-            player2.alpha=0.5;
+        if (!player2.getData('dodgeCooldown')) {
+            player2.setData('dodge',true);
         }
     });
 
     this.input.keyboard.on('keydown-ENTER', function (event) {
-        if (!player2.attack.active) {
+        if (!player2.getData('attack')) {
 			var bomb = projectiles2.get().setActive(true).setVisible(true);
 			if (bomb) {
 				var val = 1;
@@ -286,9 +234,7 @@ function create ()
 				//}, game);
 				// Player 2 movement
 			}
-
-            player2.attack.active=true;
-            player2.tint=0x0000ff;
+            player2.setData('attack',true);
         }
     });
 	
@@ -298,7 +244,7 @@ function create ()
 	});
 }
 
-/*function updateCooldown(p,active,time,timer) {
+function updateCooldown(p,active,time,timer) {
     if (p.getData(active)) {
         var t = p.getData(timer);
         p.setData(timer, t+1);
@@ -309,12 +255,37 @@ function create ()
             p.tint=0xffffff;
         }
     }
-}*/
+}
 
 function update() {
+    if (player.getData('dodge')) {
+        var t = player.getData('timer');
+        player.setData('timer', t+1);
+		player.alpha = 0.5;
+        if (t>=player.getData('dodgeTime')) {
+            player.setData('dodge',false);
+            player.setData('dodgeCooldown',true);
+            player.setData('timer',0);
+			player.alpha = 1;
+        }
+    }
+    if (player2.getData('dodge')) {
+        var t = player2.getData('timer')
+        player2.setData('timer', t+1);
+		player2.alpha = 0.5;
+        if (t>=player2.getData('dodgeTime')) {
+            player2.setData('dodge',false);
+            player2.setData('dodgeCooldown',true);
+            player2.setData('timer',0);
+			player2.alpha = 1;
+        }
+    }
+
     // Cooldowns
-    player.update();
-    player2.update();
+    updateCooldown(player,'dodgeCooldown','dodgeCooldownTime','dodgeCooldownTimer');
+    updateCooldown(player2,'dodgeCooldown','dodgeCooldownTime','dodgeCooldownTimer');
+    updateCooldown(player,'attack','attackTime','attackTimer')
+    updateCooldown(player2,'attack','attackTime','attackTimer')
 
 	// Player 1 movement
 	if (keys.W.isDown) {
@@ -356,8 +327,8 @@ function hitProjectile(p1,p2) {
 }
 
 function hitPlayer(projectile, p) {
-    if (!p.dodge.active && projectile.active === true) {
-		p.damage++;
+    if (projectile.active === true && !p.getData('dodge')) {
+        p.setData('damage', p.getData('damage')+1);
 		p.setTint(0xff0000);
 		var explosion = explosions.get().setActive(true);
 		explosion.setOrigin( 0.5, 0.5 );
