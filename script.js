@@ -220,10 +220,10 @@ function create ()
 	keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT');
 	
 	var players = this.physics.add.group({classType: Player});
-    player=players.get();
+    player=players.get().setScale(2,2);
     player.setCollideWorldBounds(true);
     
-    player2=players.get();
+    player2=players.get().setScale(2,2);
     player2.setCollideWorldBounds(true);
 
     player.initPos(150,300);
@@ -359,7 +359,7 @@ function hitProjectile(p1,p2) {
 }
 
 function hitPlayer(projectile, p) {
-    if (!p.dodge.active) {
+    if (!p.dodge.active && projectile.active === true) {
 		p.damage++;
 		p.setTint(0xff0000);
 		var explosion = explosions.get().setActive(true);
