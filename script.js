@@ -59,22 +59,19 @@ var Bomb = new Phaser.Class({
 			case 12: // down and side
 				this.direction = -Math.PI/12;
 				break;
-		} 
-		this.direction -= Math.PI;
-		if (left) {this.direction *= -1;}
-		this.direction += Math.PI/2;
+		}
         this.setPosition(shooter.x, shooter.y); // Initial position
 
         // Calculate X and y velocity of bullet to moves it from shooter to target
         if (left)
         {
-            this.xSpeed = this.speed*Math.sin(this.direction);
-            this.ySpeed = this.speed*Math.cos(this.direction);
+            this.xSpeed = -this.speed*Math.cos(this.direction);
+            this.ySpeed = -this.speed*Math.sin(this.direction);
         }
         else
         {
-            this.xSpeed = -this.speed*Math.sin(this.direction);
-            this.ySpeed = -this.speed*Math.cos(this.direction);
+            this.xSpeed = this.speed*Math.cos(this.direction);
+            this.ySpeed = -this.speed*Math.sin(this.direction);
         }
 
         this.rotation = shooter.rotation; // angle bullet with shooters rotation
