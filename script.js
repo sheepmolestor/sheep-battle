@@ -56,8 +56,10 @@ var Bomb = new Phaser.Class({
 		}
         this.setPosition(shooter.x, shooter.y); // Initial position
 
+		console.log("Speed: " + -1000*Math.sin(direction) + ", " + (left ? -1 : 1)*1000*Math.cos(direction))
 		this.setVelocityY(-1000*Math.sin(direction));
         this.setVelocityX((left ? -1 : 1)*1000*Math.cos(direction));
+		this.setImmovable(true);
 
         this.rotation = shooter.rotation; // angle bullet with shooters rotation
 		this.setCollideWorldBounds(true);
@@ -131,6 +133,7 @@ var Player = new Phaser.Class({
 
     initPos: function(x, y) {
         this.setPosition(x,y);
+		this.setScale(2,2);
 		this.setImmovable(true);
     },
 
@@ -192,14 +195,16 @@ function create ()
 	keys = this.input.keyboard.addKeys('W,A,S,D,UP,DOWN,LEFT,RIGHT');
 	
 	var players = this.physics.add.group({classType: Player});
-    player=players.get().setScale(2,2);
+    player=players.get();
     player.setCollideWorldBounds(true);
     
-    player2=players.get().setScale(2,2);
+    player2=players.get();
     player2.setCollideWorldBounds(true);
 
     player.initPos(150,300);
     player2.initPos(650,300);
+	
+	physics.add.collider(projectiles, projectiles2, hitProjectile);
 
     this.input.keyboard.on('keydown-SPACE', function (event) {
         if (!player.attack.active) {
@@ -317,17 +322,20 @@ function update() {
 }
 
 function hitProjectile(p1,p2) {
-	var explosion = explosions.get().setActive(true);
-	explosion.setOrigin( 0.5, 0.5 );
-	explosion.x = p1.x;
-	explosion.y = p1.y;
-	explosion.play( 'hurt' );
-	explosion.on('animationcomplete', function() {
-		explosion.destroy();
-		explosion.setActive(false);
-	}, this);
-	p1.setActive(false).setVisible(false);
-    p2.setActive(false).setVisible(false);
+	console.log("hit");
+	if(p1.active && p2.active) {
+		var explosion = explosions.get().setActive(true);
+		explosion.setOrigin( 0.5, 0.5 );
+		explosion.x = p1.x;
+		explosion.y = p1.y;
+		explosion.play( 'hurt' );
+		explosion.on('animationcomplete', function() {
+			explosion.destroy();
+			explosion.setActive(false);
+		}, this);
+		p1.setActive(false).setVisible(false);
+		p2.setActive(false).setVisible(false);
+	}
 }
 
 function hitPlayer(projectile, p) {
