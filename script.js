@@ -20,82 +20,57 @@ var game = new Phaser.Game(config);
 
 var Bomb = new Phaser.Class({
 
-    Extends: Phaser.GameObjects.Image,
+	Extends: Phaser.Physics.Arcade.Sprite,
 
     initialize:
 
-    // Bullet Constructor
     function Bomb (scene)
     {
-        Phaser.GameObjects.Image.call(this, scene, 0, 0, 'bomb');
-        this.speed = 1;
-        this.born = 0;
-        this.direction = 0;
+		Phaser.Physics.Arcade.Sprite.call(this, scene, 0, 0, 'bomb');
         this.xSpeed = 0;
         this.ySpeed = 0;
-        //this.setSize(12, 12, true);
 		this.setScale(2,2);
     },
 
-    // Fires a bullet from the player to the reticle
     fire: function (shooter, val)
     {
-		this.direction = 0;
+		var direction = 0;
 		var left = (val % 2 != 0);
 		if (left) {val -= 1;}
 		switch(val) {
 			case 2: // up only
-				this.direction = Math.PI/6;
+				direction = Math.PI/6;
 				break;
 			case 4: // side only
-				this.direction = 0;
+				direction = 0;
 				break;
 			case 6: // up and side
-				this.direction = Math.PI/12;
+				direction = Math.PI/12;
 				break;
 			case 8: // down only
-				this.direction = -Math.PI/6;
+				direction = -Math.PI/6;
 				break;
 			case 12: // down and side
-				this.direction = -Math.PI/12;
+				direction = -Math.PI/12;
 				break;
 		} 
 		this.direction -= Math.PI;
 		if (left) {this.direction *= -1;}
 		this.direction += Math.PI/2;
-        this.setPosition(shooter.x, shooter.y); // Initial position
-
-        // Calculate X and y velocity of bullet to moves it from shooter to target
-        if (left)
-        {
-            this.xSpeed = this.speed*Math.sin(this.direction);
-            this.ySpeed = this.speed*Math.cos(this.direction);
-        }
-        else
-        {
-            this.xSpeed = -this.speed*Math.sin(this.direction);
-            this.ySpeed = -this.speed*Math.cos(this.direction);
-        }
+        this.setPosition(shooter.x, shooter.y); // Initial position		this.setVelocityY(-1000*Math.sin(direction));
+        this.setVelocityX((left ? -1 : 1)*1000*Math.cos(direction));
 
         this.rotation = shooter.rotation; // angle bullet with shooters rotation
-        this.born = 0; // Time since new bullet spawned
-
+		this.setCollideWorldBounds(true);
+		this.body.onWorldBounds = true;
+		this.body.world.on('worldbounds', function(body) {
+			if (body.gameObject === this) {
+				this.setActive(false);
+				this.setVisible(false);}
+		}, this);
     },
 
-    // Updates the position of the bullet each cycle
-    update: function (time, delta)
-    {
-        var i = this.y;
-        this.x += this.xSpeed * delta;
-        this.y += this.ySpeed * delta;
-        this.born += delta;
-        if (this.born > 1800)
-        {
-            this.setActive(false);
-            this.setVisible(false);
-        }
-        document.getElementById("title").innerHTML = this.y-i;
-    }
+    update: function (time, delta) {}
 
 });
 
@@ -123,6 +98,55 @@ var projectiles2;
 var keys;
 var explosions;
 
+var Cooldown = new Phaser.Class({
+    initialize: function Cooldown(t=100) {
+        this.active=false;
+        this.duration=t;
+        this.timer=0;
+    },
+
+    update: function() {
+        if (this.active) {
+            this.timer++;
+            if (this.timer>=this.duration) {
+                this.active=false;
+                this.timer=0;
+                return true;
+            }
+        }
+        return false;
+    }
+});
+
+var Player = new Phaser.Class({
+
+    Extends: Phaser.Physics.Arcade.Sprite,
+
+    initialize: function Player(scene) {
+        Phaser.Physics.Arcade.Sprite.call(this, scene, 0, 0, 'bunny');
+        this.dodge = new Cooldown(40);
+        this.damage=0;
+        this.dodgeCooldown = new Cooldown();
+        this.attack = new Cooldown();
+    },
+
+    initPos: function(x, y) {
+        this.setPosition(x,y);
+		this.setImmovable(true);
+    },
+
+    update: function () {
+        if (this.dodge.update()) {
+            this.dodgeCooldown.active=true;this.alpha=1;this.tint=0x0000ff;
+        }
+        if (this.dodgeCooldown.update()) {this.blue();}
+        if (this.attack.update()){this.blue();}
+    },
+
+    blue: function () {
+        this.tint=0xffffff;
+    }
+});
 function create ()
 {
 	this.add.tileSprite(400, 300, 800, 600, 'grass');
