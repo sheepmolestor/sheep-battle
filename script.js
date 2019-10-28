@@ -20,10 +20,12 @@ var game = new Phaser.Game(config);
 
 var Bomb = new Phaser.Class({
 
+    //Extends: Phaser.GameObjects.Image,
 	Extends: Phaser.Physics.Arcade.Sprite,
 
     initialize:
 
+    // Bullet Constructor
     function Bomb (scene)
     {
 		Phaser.Physics.Arcade.Sprite.call(this, scene, 0, 0, 'bomb');
@@ -32,6 +34,7 @@ var Bomb = new Phaser.Class({
 		this.setScale(2,2);
     },
 
+    // Fires a bullet from the player to the reticle
     fire: function (shooter, val)
     {
 		var direction = 0;
@@ -70,7 +73,14 @@ var Bomb = new Phaser.Class({
 		}, this);
     },
 
-    update: function (time, delta) {}
+    // Updates the position of the bullet each cycle
+    update: function (time, delta)
+    {
+		if(this.active) {
+			this.x += this.xSpeed * delta;
+			this.y += this.ySpeed * delta;
+		}
+    }
 
 });
 
@@ -128,11 +138,16 @@ var Player = new Phaser.Class({
         this.damage=0;
         this.dodgeCooldown = new Cooldown();
         this.attack = new Cooldown();
+        //this.dodgeCooldown=false;
+        //this.dodgeCooldownTime=100;
+        //this.dodgeCooldownTimer=0;
+        //this.attack=false;
+        //this.attackTime=100;
+        //this.attackTimer=0;
     },
 
     initPos: function(x, y) {
         this.setPosition(x,y);
-		this.setImmovable(true);
     },
 
     update: function () {
